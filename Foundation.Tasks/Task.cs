@@ -97,6 +97,11 @@ namespace Foundation.Tasks
         /// </summary>
         public static bool DisableMultiThread = false;
 
+		/// <summary>
+		/// Forces a coroutine to complete execution in a single frame
+		/// </summary>
+		public static bool DisableCoroutineYields = false;
+
         /// <summary>
         /// Logs Exceptions
         /// </summary>

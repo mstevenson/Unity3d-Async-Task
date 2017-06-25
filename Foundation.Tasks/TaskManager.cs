@@ -77,7 +77,9 @@ namespace Foundation.Tasks
 
 
                 var go = new GameObject("_TaskManager");
-                DontDestroyOnLoad(go);
+				if (Application.isPlaying) {
+					DontDestroyOnLoad(go);
+				}
                 _instance = go.AddComponent<TaskManager>();
 
                 MainThread = CurrentThread;
@@ -98,6 +100,8 @@ namespace Foundation.Tasks
         /// </summary>
         public static Coroutine StartRoutine(IEnumerator coroutine)
         {
+			UnityEngine.Assertions.Assert.IsFalse (UnityTask.DisableCoroutineYields, "TaskManager.StartRoutine is not compatible with UnityTask.DisableCoroutineYields");
+
             if (IsApplicationQuit)
                 return null;
 
@@ -134,7 +138,11 @@ namespace Foundation.Tasks
             }
             else
             {
-                Instance.StartCoroutine(Instance.RunCoroutineInfo(info));
+				if (UnityTask.DisableCoroutineYields) {
+					RunCoroutineWithoutYields (Instance.RunCoroutineInfo(info));
+				} else {
+					Instance.StartCoroutine(Instance.RunCoroutineInfo(info));
+				}
             }
         }
 
@@ -277,11 +285,56 @@ namespace Foundation.Tasks
 
         IEnumerator RunCoroutineInfo(CoroutineCommand info)
         {
-            yield return StartCoroutine(info.Coroutine);
-
-            if (info.OnComplete != null)
-                info.OnComplete();
+			if (UnityTask.DisableCoroutineYields) {
+				// HACK
+				RunCoroutineWithoutYields (info.Coroutine);
+				if (info.OnComplete != null)
+					info.OnComplete();
+				yield break;
+			} else {
+				yield return StartCoroutine(info.Coroutine);
+				if (info.OnComplete != null)
+					info.OnComplete();
+			}
         }
+
+		/// <summary>
+		/// Execute an entire Unity Coroutine in one frame.
+		/// This is useful for testing coroutines with NUnit.
+		/// 
+		/// The process will bail out after a fixed number of yields to avoid
+		/// looping infinitely.
+		/// 
+		/// Calling StartCoroutine from inside an IEnumerator is not supported
+		/// because there is no way to access the IEnumerator object created
+		/// by StartCoroutine.
+		/// 
+		/// Returns true if the coroutine execution finished, otherwise false if it
+		/// bailed early after reaching the maximum number of yields.
+		/// </summary>
+		static bool RunCoroutineWithoutYields (IEnumerator enumerator, int maxYields = 1000)
+		{
+			Stack<IEnumerator> enumStack = new Stack<IEnumerator> ();
+			enumStack.Push (enumerator);
+
+			int step = 0;
+			while (enumStack.Count > 0) {
+				IEnumerator activeEnum = enumStack.Pop ();
+				while (activeEnum.MoveNext ()) {
+					if (activeEnum.Current is IEnumerator) {
+						enumStack.Push (activeEnum);
+						activeEnum = (IEnumerator)activeEnum.Current;
+					} else if (activeEnum.Current is Coroutine) {
+						throw new System.NotSupportedException ("RunCoroutineWithoutYields can not be used with an IEnumerator that calls StartCoroutine inside itself.");
+					}
+					step += 1;
+					if (step >= maxYields) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
 
         protected void OnApplicationQuit()
         {

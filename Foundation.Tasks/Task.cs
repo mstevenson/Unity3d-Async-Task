@@ -89,7 +89,7 @@ namespace Foundation.Tasks
     ///        Debug.LogException(task.Exception)
     ///</code>
     ///</example>
-    public partial class UnityTask : IDisposable
+	public partial class UnityTask : CustomYieldInstruction, IDisposable
     {
         #region options
         /// <summary>
@@ -497,14 +497,12 @@ namespace Foundation.Tasks
         /// Wait for the task to complete in an iterator coroutine
         /// </summary>
         /// <returns></returns>
-        public IEnumerator WaitRoutine()
-        {
-            while (IsRunning || CompleteList.Count > 0)
-            {
-                yield return 1;
-            }
-        }
-
+		public override bool keepWaiting {
+			get {
+				return IsRunning || CompleteList.Count > 0;
+			}
+		}
+        
         /// <summary>
         /// Waits for the task to complete
         /// </summary>

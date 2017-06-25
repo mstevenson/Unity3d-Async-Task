@@ -62,7 +62,7 @@ namespace Foundation.Tasks
         /// <summary>
         /// Creates a new running task
         /// </summary>
-        public static UnityTask Run<TP>(Action<TP> action, TP param)
+        public static UnityTask Run<TParam>(Action<TParam> action, TParam param)
         {
             var task = new UnityTask(action, param, TaskStrategy.CurrentThread);
             task.Start();
@@ -72,7 +72,7 @@ namespace Foundation.Tasks
         /// <summary>
         /// Creates a new running task
         /// </summary>
-        public static UnityTask RunOnMain<TP>(Action<TP> action, TP param)
+        public static UnityTask RunOnMain<TParam>(Action<TParam> action, TParam param)
         {
             var task = new UnityTask(action, param, TaskStrategy.MainThread);
             task.Start();
@@ -82,7 +82,7 @@ namespace Foundation.Tasks
         /// <summary>
         /// Creates a new running task
         /// </summary>
-        public static UnityTask RunOnCurrent<TP>(Action<TP> action, TP param)
+        public static UnityTask RunOnCurrent<TParam>(Action<TParam> action, TParam param)
         {
             var task = new UnityTask(action, param, TaskStrategy.CurrentThread);
             task.Start();
@@ -114,13 +114,49 @@ namespace Foundation.Tasks
         }
 
         /// <summary>
-        /// Creates a new running task
+        /// Creates a new running task which passes the task as a parameter
         /// </summary>
         public static UnityTask RunCoroutine(Func<UnityTask, IEnumerator> function)
         {
             var task = new UnityTask();
             task.Strategy = TaskStrategy.Coroutine;
             task._routine = function(task);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a new running task which passes the task as a parameter, and one additional parameter
+        /// </summary>
+        public static UnityTask RunCoroutine<TParam>(Func<UnityTask, TParam, IEnumerator> function, TParam param)
+        {
+            var task = new UnityTask();
+            task.Strategy = TaskStrategy.Coroutine;
+            task._routine = function(task, param);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a new running task which passes the task as a parameter, and two additional parameters
+        /// </summary>
+        public static UnityTask RunCoroutine<TParam1, TParam2>(Func<UnityTask, TParam1, TParam2, IEnumerator> function, TParam1 param1, TParam2 param2)
+        {
+            var task = new UnityTask();
+            task.Strategy = TaskStrategy.Coroutine;
+            task._routine = function(task, param1, param2);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a new running task which passes the task as a parameter, and three additional parameters
+        /// </summary>
+        public static UnityTask RunCoroutine<TParam1, TParam2, TParam3>(Func<UnityTask, TParam1, TParam2, TParam3, IEnumerator> function, TParam1 param1, TParam2 param2, TParam3 param3)
+        {
+            var task = new UnityTask();
+            task.Strategy = TaskStrategy.Coroutine;
+            task._routine = function(task, param1, param2, param3);
             task.Start();
             return task;
         }
@@ -157,7 +193,7 @@ namespace Foundation.Tasks
         }
 
         /// <summary>
-        /// Creates a new running task
+        /// Creates a new running task on the main thread that returns a result
         /// </summary>
         public static UnityTask<TResult> RunOnMain<TParam, TResult>(Func<TParam, TResult> function, TParam param)
         {
@@ -167,7 +203,7 @@ namespace Foundation.Tasks
         } 
         
         /// <summary>
-        /// Creates a new running task
+        /// Creates a new running task on the current thread that returns a result
         /// </summary>
         public static UnityTask<TResult> RunOnCurrent<TResult>(Func<TResult> function)
         {
@@ -177,7 +213,7 @@ namespace Foundation.Tasks
         }
 
         /// <summary>
-        /// Creates a new running task
+        /// Creates a new running task on the current thread that returns a result
         /// </summary>
         public static UnityTask<TResult> RunOnCurrent<TParam, TResult>(Func<TParam, TResult> function, TParam param)
         {
@@ -187,7 +223,7 @@ namespace Foundation.Tasks
         }
 
         /// <summary>
-        /// Creates a new running task
+        /// Creates a new running task that returns a result
         /// </summary>
         public static UnityTask<TResult> RunCoroutine<TResult>(IEnumerator function)
         {
@@ -197,7 +233,7 @@ namespace Foundation.Tasks
         }
 
         /// <summary>
-        /// Creates a task which passes the task as a parameter
+        /// Creates a task which returns a result and passes the task as a parameter
         /// </summary>
         public static UnityTask<TResult> RunCoroutine<TResult>(Func<UnityTask<TResult>, IEnumerator> function)
         {
@@ -205,6 +241,45 @@ namespace Foundation.Tasks
             task.Strategy = TaskStrategy.Coroutine;
             task.Paramater = task;
             task._routine = function(task);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a task which returns a result, passes the task as a parameter, and passes one additional parameter
+        /// </summary>
+        public static UnityTask<TResult> RunCoroutine<TParam, TResult>(Func<UnityTask<TResult>, TParam, IEnumerator> function, TParam param)
+        {
+            var task = new UnityTask<TResult>();
+            task.Strategy = TaskStrategy.Coroutine;
+            task.Paramater = task;
+            task._routine = function(task, param);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a task which returns a result, passes the task as a parameter, and passes two additional parameters
+        /// </summary>
+        public static UnityTask<TResult> RunCoroutine<TParam1, TParam2, TResult>(Func<UnityTask<TResult>, TParam1, TParam2, IEnumerator> function, TParam1 param1, TParam2 param2)
+        {
+            var task = new UnityTask<TResult>();
+            task.Strategy = TaskStrategy.Coroutine;
+            task.Paramater = task;
+            task._routine = function(task, param1, param2);
+            task.Start();
+            return task;
+        }
+
+        /// <summary>
+        /// Creates a task which returns a result, passes the task as a parameter, and passes three additional parameters
+        /// </summary>
+        public static UnityTask<TResult> RunCoroutine<TParam1, TParam2, TParam3, TResult>(Func<UnityTask<TResult>, TParam1, TParam2, TParam3, IEnumerator> function, TParam1 param1, TParam2 param2, TParam3 param3)
+        {
+            var task = new UnityTask<TResult>();
+            task.Strategy = TaskStrategy.Coroutine;
+            task.Paramater = task;
+            task._routine = function(task, param1, param2, param3);
             task.Start();
             return task;
         }
